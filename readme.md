@@ -7,5 +7,5 @@
 https://www.oracle.com/database/technologies/instant-client/linux-x86-64-downloads.html
 2. Unzip both to /opt/oracle
 3. Install pecl and other dependencies: `# apt install php-pear php7.3-dev build-essential`
-4. install oci8: `# pecl install oci8` (when asked input: `instantclient,/opt(oracle`)
+4. install oci8: `# pecl install oci8` (when asked input: `instantclient,/opt/oracle`)
 5. add `extension=oci8` to php.ini
