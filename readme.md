@@ -1,8 +1,8 @@
 # DBS Projekt WS19
 
-## Setup
+## Setup for Debian based Linux Ditros
 
-### OCI8 Install Guide for Debian based Linux Ditros
+### Install OCI8 (Oracle drivers for PHP)
 
 1. Download Oracle Instant Client Basic and SDK zips:  
 https://www.oracle.com/database/technologies/instant-client/linux-x86-64-downloads.html
@@ -11,8 +11,14 @@ https://www.oracle.com/database/technologies/instant-client/linux-x86-64-downloa
 4. Install oci8: `# pecl install oci8` (when asked input: `instantclient,/opt/oracle`)
 5. Add `extension=oci8` to php.ini
 
-### Set DB credentials in credentials.php
+### Setup Config
 
-### Run `$ php -S localhost:8080`
+Set Database Use, Password, and Url in `credentials.php`
+
+### Run the Application
+
+`php -S localhost:8080`
+
+
 
 
