@@ -13,7 +13,7 @@ https://www.oracle.com/database/technologies/instant-client/linux-x86-64-downloa
 
 ### Setup Config
 
-Set Database Use, Password, and Url in `credentials.php`
+Set Database User, Password, and Url in `credentials.php`
 
 ### Run the Application
 
