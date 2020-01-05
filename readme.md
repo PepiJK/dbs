@@ -17,7 +17,7 @@ Set Database User, Password, and Url in `credentials.php`
 
 ### Run the Application
 
-`php -S localhost:8080`
+`$ php -S localhost:8080`
 
 
 
