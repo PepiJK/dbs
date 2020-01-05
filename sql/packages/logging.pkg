@@ -1,0 +1,55 @@
+/**********************************************************************
+/*
+/* Filename: logging.pkg
+/* Package: logging
+/* Developer: Leo Gruber
+/* Description: This package groups procedures/functions 
+/*				related to the logging table. It includes 1 procedure
+/*				for DML commands.
+/*	
+/**********************************************************************/
+
+CREATE OR REPLACE PACKAGE pa_logging
+as
+
+	PROCEDURE sp_ins_error (
+	l_v_message_in IN VARCHAR2,
+	l_n_errorCode_in IN NUMBER DEFAULT 0);
+		
+end;
+/
+
+CREATE OR REPLACE PACKAGE BODY pa_logging
+as
+			
+/*********************************************************************
+/**
+/** Procedure sp_ins_error
+/** In: l_v_message_in - the error message of the exception
+/** In: l_n_errorCode_in IN – the error code of the exception, default 0
+/** Developer: Leo Gruber
+/** Description: Insert a new excpetion log, by passing a message
+/** and the error code.
+/*********************************************************************/
+
+	PROCEDURE sp_ins_error(
+		l_v_message_in IN VARCHAR2,
+		l_n_errorCode_in IN NUMBER DEFAULT 0
+	)
+	as
+		PRAGMA AUTONOMOUS_TRANSACTION;
+		l_v_error_stack exception_logging.error_stack%TYPE;
+	begin
+		IF l_n_errorCode_in != 0 THEN -- SQLCODE = 0 --> successful sql operation
+			l_v_error_stack := DBMS_UTILITY.FORMAT_ERROR_BACKTRACE();
+			l_v_error_stack := SQLERRM(l_n_errorCode_in) || CHR(13) || l_v_error_stack;
+		END IF;
+		INSERT INTO exception_logging (log_date, log_message, error_stack, error_code)
+			VALUES(SYSDATE, l_v_message_in, l_v_error_stack, l_n_errorCode_in);
+		COMMIT;
+	end;
+
+
+
+end;
+/

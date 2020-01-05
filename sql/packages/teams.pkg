@@ -1,0 +1,126 @@
+/**********************************************************************
+/*
+/* Filename: teams.pkg
+/* Package: teams
+/* Developer: Leo Gruber
+/* Description: This package groups procedures/functions 
+/*				related to the table teams. It includes 2 procedures.
+/*				for DML commands.
+/*	
+/**********************************************************************/
+/
+
+CREATE OR REPLACE PACKAGE pa_teams
+as
+
+	PROCEDURE sp_ins_teams (
+	l_v_title_in IN VARCHAR2,
+	l_n_leagueID_in IN NUMBER,
+	l_n_teamID_out OUT NUMBER);
+	
+	PROCEDURE sp_del_team(
+		l_n_teamID_in IN NUMBER,
+		l_n_valid_out OUT NUMBER
+	);
+	
+	g_v_team_title teams.title%TYPE;
+	
+end;
+/
+
+
+
+
+
+
+CREATE OR REPLACE PACKAGE BODY pa_teams
+as
+	g_x_unsuccessful EXCEPTION;
+	PRAGMA EXCEPTION_INIT(g_x_unsuccessful, -20101);
+
+/*********************************************************************
+/**
+/** Procedure sp_ins_teams
+/** Out: l_n_teamID_out – the id of the newly created team.
+/**							-1 if unsuccessful
+/** In: l_v_title_in - the name of the new team
+/** In: l_n_leagueID_in - the id of the related league
+/** Developer: Leo Gruber
+/** Description: Insert a new team, by passing the teams title and league.
+/*********************************************************************/
+
+	PROCEDURE sp_ins_teams(
+		l_v_title_in IN VARCHAR2,
+		l_n_leagueID_in IN NUMBER,
+		l_n_teamID_out OUT NUMBER
+	)
+	as
+		l_n_teamID teams.id%TYPE;
+		l_n_valid NUMBER;
+		x_invalid_record EXCEPTION;
+		PRAGMA EXCEPTION_INIT(x_invalid_record, -20102);
+	begin
+		SELECT COUNT(*) INTO l_n_valid FROM leagues WHERE id = l_n_leagueID_in;
+		IF l_n_valid != 1 THEN
+			raise_application_error(-20102, 'Unexisting record');
+		END IF;
+		INSERT INTO teams (title, league_id) 
+			VALUES(l_v_title_in, l_n_leagueID_in) RETURNING id INTO l_n_teamID;
+		l_n_teamID_out := l_n_teamID;
+		IF SQL%ROWCOUNT = 0 THEN
+			raise_application_error(-20101, 'Insert statement failed');
+		END IF;
+		COMMIT;
+		EXCEPTION 
+			WHEN x_invalid_record OR g_x_unsuccessful THEN
+				l_n_teamID_out := -1;
+				pa_logging.sp_ins_error('Exception in sp_ins_teams',SQLCODE);
+			WHEN OTHERS THEN
+				l_n_teamID_out := -1;
+				pa_logging.sp_ins_error('Unexcpeted Exception in sp_ins_teams',SQLCODE);
+	end;
+	
+	
+	
+/*********************************************************************
+/**
+/** Procedure sp_del_team
+/** Out: l_n_valid_out - -1 if the input record is undefined/operation unsuccessful 
+/** 					else 0
+/** In: l_n_teamID_in – the id of the team to delete.
+/** Developer: Leo Gruber
+/** Description: Remove a team, by passing the teams id.
+/**
+/*********************************************************************/
+
+	PROCEDURE sp_del_team(
+		l_n_teamID_in IN NUMBER,
+		l_n_valid_out OUT NUMBER
+	)
+	as
+		l_i_count int;
+		x_invalid_record EXCEPTION;
+		PRAGMA EXCEPTION_INIT(x_invalid_record, -20102);
+	begin
+		l_n_valid_out := 0;
+		SELECT COUNT(*) INTO l_i_count FROM
+		teams WHERE id = l_n_teamID_in;
+		IF l_i_count != 1 THEN
+			raise_application_error(-20102, 'Unexisting record');
+		END IF;
+		SELECT title INTO g_v_team_title FROM teams WHERE id = l_n_teamID_in;
+		DELETE FROM teams where id = l_n_teamID_in;
+		IF SQL%ROWCOUNT = 0 THEN
+			raise_application_error(-20101, 'Delete statement failed');
+		END IF;
+		COMMIT;
+		EXCEPTION
+			WHEN x_invalid_record OR g_x_unsuccessful THEN
+				l_n_valid_out := -1;
+				pa_logging.sp_ins_error('Exception in sp_del_team',SQLCODE);
+			WHEN OTHERS THEN
+				l_n_valid_out := -1;
+				pa_logging.sp_ins_error('Unexpected Exception in sp_del_team',SQLCODE);
+	end;
+end;
+/

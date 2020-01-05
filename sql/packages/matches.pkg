@@ -1,0 +1,217 @@
+/**********************************************************************
+/*
+/* Filename: matches.pkg
+/* Package: matches
+/* Developer: Leo Gruber
+/* Description: This package groups procedures/functions 
+/*				related to the table matches. It includes 2 procedures
+/*				and 1 function.
+/*				for DML commands.
+/*	
+/**********************************************************************/
+/
+
+CREATE OR REPLACE PACKAGE pa_matches
+as
+
+	FUNCTION ven_num_matches(
+	l_n_venuesID_in IN NUMBER,
+	l_v_date_in IN CHAR) RETURN NUMBER;
+	
+	PROCEDURE sp_ins_matches (
+	l_v_datetime_in IN VARCHAR2,
+	l_n_homegame_in IN NUMBER,
+	l_v_opponent_in IN VARCHAR2,
+	l_v_result_in IN VARCHAR2 DEFAULT NULL,
+	l_n_venueID_in IN NUMBER,
+	l_n_teamID_in IN NUMBER,
+	l_n_matchID_out OUT NUMBER);
+		
+	PROCEDURE sp_del_matches (
+	l_n_matchID_in IN NUMBER,
+	l_n_valid_out OUT NUMBER);
+	
+end;
+/
+
+
+
+
+
+
+CREATE OR REPLACE PACKAGE BODY pa_matches
+as
+	g_x_unsuccessful EXCEPTION;
+	PRAGMA EXCEPTION_INIT(g_x_unsuccessful, -20101);
+	
+/*********************************************************************
+/**
+/** Function: venue_num_matches
+/** In: l_n_venuesID_in – the id of the venue
+/** In: l_v_date_in - the date of matches
+/** Returns: the number of matches on a given date in a given venue
+/**			 -1 if venue non existent
+/** Developer: Leo Gruber
+/** Description: This function is used to return the number of matches
+/**				 on a given date in a given venue. Useful for deciding
+/**				 if a venue is fully booked on a day.
+/**
+/*********************************************************************/
+
+	FUNCTION ven_num_matches(
+		l_n_venuesID_in IN NUMBER,
+		l_v_date_in IN CHAR
+	) RETURN NUMBER
+	is
+		l_i_isVenue INT;
+		l_n_count NUMBER;
+		x_invalid_record EXCEPTION;
+		PRAGMA EXCEPTION_INIT(x_invalid_record, -20102);
+	begin
+		SELECT COUNT(*) INTO l_i_isVenue
+		FROM venues WHERE id = l_n_venuesID_in;
+		IF l_i_isVenue != 1 THEN
+			raise_application_error(-20102, 'Unexisting record');
+		END IF;
+		SELECT COUNT(*) INTO l_n_count FROM venues v 
+		LEFT JOIN matches m 
+		ON v.id = m.venue_id
+		WHERE TRUNC(m.datetime) = TO_DATE(l_v_date_in, 'yyyy-mm-dd');
+		RETURN l_n_count;
+		EXCEPTION
+		WHEN x_invalid_record THEN
+			pa_logging.sp_ins_error('Exception in ven_num_matches',SQLCODE);
+			RETURN -1;
+		WHEN OTHERS THEN
+			pa_logging.sp_ins_error('Unexpected Exception in ven_num_matches', SQLCODE);
+			RETURN -1;
+	end;
+
+
+
+
+
+
+
+
+
+/*********************************************************************
+/**
+/** Procedure sp_ins_matches
+/** Out: l_n_matchID_out – the id of the newly created match.
+/**							-1 if unsuccessful
+/** In: l_v_datetime_in - the date of the new match
+/** In: l_n_homegame_in – 1 if homegame, else 0
+/** In: l_v_opponent_in – the name of the opponent team
+/** In: l_v_result_in – the result of the match
+/** In: l_n_venueID_in – the id of the venue
+/** In: l_n_teamID_in - the id of the team
+/** Developer: Leo Gruber
+/** Description: Insert a new match, by passing the date, the opponent, 
+/** optionally a result, the venue id, the team id and homegame var
+/**(1 if homegame, else 0) 
+/*********************************************************************/
+
+	PROCEDURE sp_ins_matches(
+		l_v_datetime_in IN VARCHAR2,
+		l_n_homegame_in IN NUMBER,
+		l_v_opponent_in IN VARCHAR2,
+		l_v_result_in IN VARCHAR2 DEFAULT NULL,
+		l_n_venueID_in IN NUMBER,
+		l_n_teamID_in IN NUMBER,
+		l_n_matchID_out OUT NUMBER
+	)
+	as
+	  l_n_matchesID matches.id%TYPE;
+	  x_invalid_homegame EXCEPTION;
+	  PRAGMA EXCEPTION_INIT(x_invalid_homegame,-20104);
+	begin
+		IF l_n_homegame_in NOT IN (0,1) THEN
+			raise_application_error(-20104, 'Unacceptable value: is_homegame must be in (0,1)');
+		END IF;
+		INSERT INTO matches (datetime, is_homegame, opponend, result, venue_id, team_id) 
+		VALUES(TO_TIMESTAMP(l_v_datetime_in, 'yyyy-mm-dd hh24:mi:ss'), l_n_homegame_in, l_v_opponent_in, l_v_result_in, l_n_venueID_in, l_n_teamID_in)  
+		returning id INTO l_n_matchesID;
+		l_n_matchID_out := l_n_matchesID;
+		IF SQL%ROWCOUNT = 0 THEN
+			raise_application_error(-20101, 'Insert statement failed');
+		END IF;
+		COMMIT;
+		EXCEPTION 
+			WHEN x_invalid_homegame OR g_x_unsuccessful THEN
+				l_n_matchID_out := -1;
+				pa_logging.sp_ins_error('Exception in sp_ins_matches',SQLCODE);
+			WHEN OTHERS THEN
+				l_n_matchID_out := -1;
+				pa_logging.sp_ins_error('Unexpected Exception in sp_ins_matches', SQLCODE);
+	end;
+	
+	
+	
+	
+	
+	
+/*********************************************************************
+/**
+/** Procedure sp_del_matches
+/** Out: l_n_valid_out – -1 if the input record is undefined/operation 
+/**						unsuccessful else 0
+/** In: l_n_matchID_in - the id of the match
+/** Developer: Leo Gruber
+/** Description: Delete a match record from the table matches by passing
+/** the id of the match.
+/*********************************************************************/
+
+	PROCEDURE sp_del_matches (
+	l_n_matchID_in IN NUMBER,
+	l_n_valid_out OUT NUMBER)
+	as
+		l_n_valid NUMBER;
+		x_invalid_record EXCEPTION;
+		PRAGMA EXCEPTION_INIT(x_invalid_record, -20102);
+	begin
+		l_n_valid_out := 0;
+		SELECT COUNT(*) INTO l_n_valid FROM matches WHERE id = l_n_matchID_in;
+		IF l_n_valid != 1 THEN
+			raise_application_error(-20102, 'Unexisting record');
+		END IF;
+		DELETE FROM matches WHERE id = l_n_matchID_in;
+		IF SQL%ROWCOUNT = 0 THEN
+			RAISE g_x_unsuccessful;
+		END IF;
+		COMMIT;
+		EXCEPTION 
+			WHEN x_invalid_record OR g_x_unsuccessful THEN
+			l_n_valid_out := -1;
+			pa_logging.sp_ins_error('Exception in sp_del_matches', SQLCODE);
+			WHEN OTHERS THEN
+			l_n_valid_out := -1;
+			pa_logging.sp_ins_error('Unexpected Exception in sp_del_matches',SQLCODE);
+	end;
+	
+	
+	
+
+
+end;
+/
+
+
+
+
+/**** FOR TESTING *****/
+
+declare
+	idd number;
+begin 
+pa_matches.sp_ins_matches(
+		l_v_datetime_in => '2020-01-10 13:30:00',
+		l_n_homegame_in => 1,
+		l_v_opponent_in => 'trr',
+		l_v_result_in => NULL,
+		l_n_venueID_in => 1,
+		l_n_teamID_in =>2,
+		l_n_matchID_out => idd
+	);
+end;
+/

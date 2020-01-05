@@ -1,0 +1,150 @@
+/**********************************************************************
+/*
+/* Filename: members.pkg
+/* Package: members
+/* Developer: Leo Gruber
+/* Description: This package groups procedures/functions 
+/*				related to the members table. It includes 2 procedures.
+/*	
+/**********************************************************************/
+
+CREATE OR REPLACE PACKAGE pa_members
+as
+
+	PROCEDURE sp_ins_member(
+		l_v_firstname_in IN VARCHAR2,
+		l_v_lastname_in IN VARCHAR2,
+		l_v_sex_in IN CHAR DEFAULT 'n',
+		l_v_birthdate_in IN VARCHAR2 DEFAULT NULL,
+		l_n_typeID_in IN NUMBER,
+		l_n_teamID_in IN NUMBER,
+		l_n_memberID_out OUT NUMBER
+	);
+	
+	PROCEDURE sp_del_member(
+		l_n_memberID_in IN NUMBER,
+		l_n_valid_out OUT NUMBER
+	);
+	
+end;
+/
+
+CREATE OR REPLACE PACKAGE BODY pa_members
+as
+
+	g_x_unsuccessful EXCEPTION;
+	PRAGMA EXCEPTION_INIT(g_x_unsuccessful, -20101);
+/*********************************************************************
+/**
+/** Procedure sp_ins_member
+/** Out: l_n_memberID_out – the id of the newly created member.
+/**							-1 if unsuccessful
+/** In: l_v_firstname_in – the first name of the new member to insert.
+/** In: l_v_lastname_in – the last name of the new member to insert.
+/** In: l_v_birthdate_in – the date of birth of the new member to insert.
+/** In: l_v_sex_in – the sex of the new member to insert.
+/** Developer: Leo Gruber
+/** Description: Insert a new member, by passing at least a first and last name
+/**
+/*********************************************************************/
+
+	PROCEDURE sp_ins_member(
+		l_v_firstname_in IN VARCHAR2,
+		l_v_lastname_in IN VARCHAR2,
+		l_v_sex_in IN CHAR DEFAULT 'n',
+		l_v_birthdate_in IN VARCHAR2 DEFAULT NULL,
+		l_n_typeID_in IN NUMBER,
+		l_n_teamID_in IN NUMBER,
+		l_n_memberID_out OUT NUMBER
+	)
+	as
+	  l_n_memberID members.id%TYPE;
+	  x_null_passed EXCEPTION;
+	  PRAGMA EXCEPTION_INIT(x_null_passed, -20100);
+	begin
+		IF l_v_firstname_in IS NULL OR l_v_lastname_in IS NULL THEN
+			l_n_memberID_out := -1;
+				raise_application_error(-20100, 'Firstname and Lastname cannot be null');
+		END IF;
+		
+		IF l_v_sex_in IS NULL THEN
+			INSERT INTO members (firstname, lastname, date_of_birth)
+			VALUES(l_v_firstname_in, l_v_lastname_in, TO_DATE(l_v_birthdate_in, 'yyyy-mm-dd'))
+			returning id INTO l_n_memberID;
+		ELSE
+			INSERT INTO members (firstname, lastname, date_of_birth, sex)
+			VALUES(l_v_firstname_in, l_v_lastname_in, TO_DATE(l_v_birthdate_in, 'yyyy-mm-dd'), l_v_sex_in)
+			returning id INTO l_n_memberID;
+		END IF;
+			
+		l_n_memberID_out := l_n_memberID;
+		IF SQL%ROWCOUNT = 0 THEN
+			raise_application_error(-20101, 'Member Insert statement failed');
+		END IF;
+		INSERT INTO MEMBERS_TEAMS_TYPES (member_id, team_id, type_id) VALUES (l_n_memberID, l_n_teamID_in, l_n_typeID_in);
+		IF SQL%ROWCOUNT = 0 THEN
+			raise_application_error(-20101, 'Member-Team-Type Insert statement failed');
+		END IF;
+		COMMIT;
+		EXCEPTION
+			WHEN x_null_passed OR g_x_unsuccessful THEN
+				l_n_memberID_out := -1;
+				pa_logging.sp_ins_error('Exception in sp_ins_member',SQLCODE);
+			WHEN OTHERS THEN
+				l_n_memberID_out := -1;
+				pa_logging.sp_ins_error('Unexpected Exception in sp_ins_member', SQLCODE);
+	end;
+
+
+
+
+
+
+
+/*********************************************************************
+/**
+/** Procedure sp_del_member
+/** Out: l_n_valid_out - -1 if the input record is undefined/operation unsuccessful
+/** 					else 0
+/** In: l_n_memberID_in – the id of the member to delete.
+/** In: l_v_firstname_in – the first name of the member to delete.
+/** In: l_v_lastname_in – the last name of the member to delete.
+/** Developer: Leo Gruber
+/** Description: Remove a member, by passing the id, firstname and lastname
+/**
+/*********************************************************************/
+
+	PROCEDURE sp_del_member(
+		l_n_memberID_in IN NUMBER,
+		l_n_valid_out OUT NUMBER
+	)
+	as
+		l_i_count int;
+		x_invalid_record EXCEPTION;
+		PRAGMA EXCEPTION_INIT(x_invalid_record, -20102);
+	begin
+		l_n_valid_out := 0;
+		SELECT COUNT(*) INTO l_i_count FROM
+		members WHERE id = l_n_memberID_in;
+		IF l_i_count != 1 THEN
+			raise_application_error(-20102, 'Unexisting record');
+		END IF;
+		DELETE FROM members where id = l_n_memberID_in;
+		IF SQL%ROWCOUNT = 0 THEN
+			raise_application_error(-20101, 'Delete statement failed');
+		END IF;
+		COMMIT;
+		EXCEPTION
+			WHEN x_invalid_record OR g_x_unsuccessful THEN
+				l_n_valid_out := -1;
+				pa_logging.sp_ins_error('Exception in sp_del_member',SQLCODE);
+			WHEN OTHERS THEN
+				l_n_valid_out := -1;
+				pa_logging.sp_ins_error('Unexpected Exception in sp_del_member',SQLCODE);
+	end;
+
+
+end;
+/
+
+
