@@ -4,19 +4,20 @@ require "./credentials.php";
 require "./oracledb.class.php";
 
 $db = new ORACLEDB($DBUSER, $DBPW, $DBCONN, $DBCHARSET);
-$members = $db->getMembers();
-$memberTypes = $db->getMemberTypes();
+$matches = $db->getMatches();
+$venues = $db->getVenues();
 $teams = $db->getTeams();
 
 
-if (!empty($_POST["firstname"]) && !empty($_POST["lastname"])) {
-    $db->insertMember($_POST["firstname"], $_POST["lastname"], $_POST["sex"], $_POST["date"], $_POST["type"], $_POST["team"]);
-    $members = $db->getMembers();
+if (!empty($_POST["team"]) && !empty($_POST["opponend"])) {
+    $datetime = $_POST["date"] . " " . $_POST["time"];
+    $db->insertMatch($datetime, $_POST["homegame"], $_POST["opponend"], $_POST["result"], $_POST["venue"], $_POST["team"]);
+    $matches = $db->getMatches();
 }
 
 if (isset($_GET["delete"])) {
-    $db->deleteMember($_GET["delete"]);
-    header('Location: members.php');
+    $db->deleteMatch($_GET["delete"]);
+    header('Location: matches.php');
 }
 
 ?>
@@ -44,41 +45,41 @@ if (isset($_GET["delete"])) {
             </button>
             <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
                 <div class="navbar-nav">
-                    <a class="nav-item nav-link active" href="members.php">Members<span class="sr-only">(current)</span></a>
+                    <a class="nav-item nav-link" href="members.php">Members</a>
                     <a class="nav-item nav-link" href="teams.php">Teams</a>
-                    <a class="nav-item nav-link" href="matches.php">Matches</a>
+                    <a class="nav-item nav-link active" href="matches.php">Matches<span class="sr-only">(current)</span></a>
                 </div>
             </div>
         </div>
     </nav>
 
     <main class="container my-3">
-        <h1>Members</h1>
+        <h1>Matches</h1>
         <table class="table table-sm mt-4">
             <thead>
                 <tr>
                     <th scope="col">Id</th>
-                    <th scope="col">Firstname</th>
-                    <th scope="col">Lastname</th>
-                    <th scope="col">Sex</th>
-                    <th scope="col">Date of Birth</th>
-                    <th scope="col">Type</th>
-                    <th scope="col">Team</th>
+                    <th scope="col">Datetime</th>
+                    <th scope="col">Location</th>
+                    <th scope="col">Yeet Team</th>
+                    <th scope="col">Opponend</th>
+                    <th scope="col">Result</th>
+                    <th scope="col">Venue</th>
                     <th scope="col">Action</th>
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($members as $member) { ?>
+                <?php foreach ($matches as $match) { ?>
                     <tr>
-                        <th class="align-middle" scope="row"><?php echo ($member->ID) ?></th>
-                        <td class="align-middle"><?php echo ($member->Firstname) ?></td>
-                        <td class="align-middle"><?php echo ($member->Lastname) ?></td>
-                        <td class="align-middle"><?php echo ($member->Sex) ?></td>
-                        <td class="align-middle"><?php echo ($member->Date_of_Birth) ?></td>
-                        <td class="align-middle"><?php echo ($member->Type) ?></td>
-                        <td class="align-middle"><?php echo ($member->Team) ?></td>
+                        <th class="align-middle" scope="row"><?php echo ($match->ID) ?></th>
+                        <td class="align-middle"><?php echo ($match->Datetime) ?></td>
+                        <td class="align-middle"><?php echo ($match->IS_HOMEGAME == 1) ? 'Home' : 'Away' ?></td>
+                        <td class="align-middle"><?php echo ($match->Team) ?></td>
+                        <td class="align-middle"><?php echo ($match->OPPONEND) ?></td>
+                        <td class="align-middle"><?php echo ($match->RESULT) ?></td>
+                        <td class="align-middle"><?php echo ($match->Venue) ?></td>
                         <td class="align-middle">
-                            <a href="members.php?delete=<?php echo $member->ID ?>">
+                            <a href="matches.php?delete=<?php echo $match->ID ?>">
                                 <button type="button" class="btn btn-sm btn-danger">
                                     Delete
                                 </button>
@@ -89,66 +90,71 @@ if (isset($_GET["delete"])) {
             </tbody>
         </table>
 
-        <h1 class="mt-5">Types</h1>
+        <h1 class="mt-5">Venues</h1>
         <table class="table table-sm mt-4">
             <thead>
                 <tr>
                     <th scope="col">Id</th>
                     <th scope="col">Title</th>
+                    <th scope="col">Address</th>
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($memberTypes as $type) { ?>
+                <?php foreach ($venues as $venue) { ?>
                     <tr>
-                        <th scope="row"><?php echo ($type->ID) ?></th>
-                        <td><?php echo ($type->TITLE) ?></td>
+                        <th scope="row"><?php echo ($venue->ID) ?></th>
+                        <td><?php echo ($venue->TITLE) ?></td>
+                        <td><?php echo ($venue->ADDRESS) ?></td>
                     </tr>
                 <?php } ?>
             </tbody>
         </table>
 
         <div class="mt-5">
-            <h2>Insert Member</h2>
-            <form class="mt-3" action="members.php" method="POST">
+            <h2>Insert Match</h2>
+            <form class="mt-3" action="matches.php" method="POST">
                 <div class="form-row">
                     <div class="form-group col">
-                        <label for="firstname">Firstname</label>
-                        <input id="firstname" type="text" class="form-control" name="firstname">
+                        <label for="date">Date</label>
+                        <input id="date" type="date" class="form-control" name="date">
                     </div>
                     <div class="form-group col">
-                        <label for="lastname">Lastname</label>
-                        <input id="lastname" type="text" class="form-control" name="lastname">
+                        <label for="time">Time</label>
+                        <input id="time" type="time" class="form-control" name="time">
                     </div>
-                    <div class="form-group col-2">
-                        <label for="sex">Sex</label>
-                        <select id="sex" class="form-control" name="sex">
+                    <div class="form-group col">
+                        <label for="homegame">Location</label>
+                        <select id="homegame" class="form-control" name="homegame">
                             <option class="d-none"></option>
-                            <option value="f">Female</option>
-                            <option value="m">Male</option>
-                            <option value="n">Other</option>
+                            <option value="1">Home</option>
+                            <option value="0">Away</option>
                         </select>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group col">
-                        <label for="date">Date off Birth</label>
-                        <input id="date" type="date" class="form-control" name="date">
-                    </div>
-                    <div class="form-group col-2">
-                        <label for="type">Type</label>
-                        <select id="type" class="form-control" name="type">
-                            <option class="d-none"></option>
-                            <?php foreach ($memberTypes as $type) { ?>
-                                <option value="<?php echo $type->ID ?>"><?php echo $type->TITLE ?></option>
-                            <?php } ?>
-                        </select>
-                    </div>
-                    <div class="form-group col-2">
-                        <label for="team">Team</label>
+                        <label for="team">Yeet Team</label>
                         <select id="team" class="form-control" name="team">
                             <option class="d-none"></option>
                             <?php foreach ($teams as $team) { ?>
                                 <option value="<?php echo $team->ID ?>"><?php echo $team->Team ?></option>
+                            <?php } ?>
+                        </select>
+                    </div>
+                    <div class="form-group col">
+                        <label for="opponend">Opponend</label>
+                        <input id="opponend" type="text" class="form-control" name="opponend">
+                    </div>
+                    <div class="form-group col">
+                        <label for="result">Result</label>
+                        <input id="result" type="text" class="form-control" name="result">
+                    </div>
+                    <div class="form-group col">
+                        <label for="venue">Venue</label>
+                        <select id="venue" class="form-control" name="venue">
+                            <option class="d-none"></option>
+                            <?php foreach ($venues as $venue) { ?>
+                                <option value="<?php echo $venue->ID ?>"><?php echo $venue->TITLE ?></option>
                             <?php } ?>
                         </select>
                     </div>

@@ -13,7 +13,7 @@
 CREATE OR REPLACE PACKAGE pa_sports
 as
 
-	PROCEDURE sp_ins_sports (
+	PROCEDURE sp_ins_sport (
 	l_v_title_in IN VARCHAR2,
 	l_n_sportsID_out OUT NUMBER);
 	
@@ -32,7 +32,7 @@ as
 	
 /*********************************************************************
 /**
-/** Procedure sp_ins_sports
+/** Procedure sp_ins_sport
 /** Out: l_n_sportsID_out – the id of the newly created sport.
 /**							-1 if unsuccessful
 /** In: l_v_title_in - the name of the new sport
@@ -40,7 +40,7 @@ as
 /** Description: Insert a new sport, by passing the sports title.
 /*********************************************************************/
 
-	PROCEDURE sp_ins_sports(
+	PROCEDURE sp_ins_sport(
 		l_v_title_in IN VARCHAR2,
 		l_n_sportsID_out OUT NUMBER
 	)
@@ -62,10 +62,10 @@ as
 		EXCEPTION 
 			WHEN x_null_passed OR g_x_unsuccessful THEN
 				l_n_sportsID_out := -1;
-				pa_logging.sp_ins_error('Exception in sp_ins_sports',SQLCODE);
+				pa_logging.sp_ins_error('Exception in sp_ins_sport',SQLCODE);
 			WHEN OTHERS THEN
 				l_n_sportsID_out := -1;
-				pa_logging.sp_ins_error('Unexcpeted Exception in sp_ins_sports',SQLCODE);
+				pa_logging.sp_ins_error('Unexcpeted Exception in sp_ins_sport',SQLCODE);
 	end;
 	
 	

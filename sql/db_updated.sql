@@ -179,6 +179,7 @@ INSERT INTO sponsors (title) VALUES ('Amazon');
 INSERT INTO teams_sponsors (team_id, sponsor_id) VALUES (3, 1);
 INSERT INTO teams_sponsors (team_id, sponsor_id) VALUES (3, 2);
 INSERT INTO teams_sponsors (team_id, sponsor_id) VALUES (1, 3);
+INSERT INTO teams_sponsors (team_id, sponsor_id) VALUES (1, 2);
 
 
 

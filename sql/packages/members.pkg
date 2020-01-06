@@ -4,12 +4,18 @@
 /* Package: members
 /* Developer: Leo Gruber
 /* Description: This package groups procedures/functions 
-/*				related to the members table. It includes 2 procedures.
+/*				related to the members table. It includes 4 procedures.
 /*	
 /**********************************************************************/
 
 CREATE OR REPLACE PACKAGE pa_members
 as
+
+    PROCEDURE get_members(
+	    members_cur_out OUT SYS_REFCURSOR);
+
+    PROCEDURE get_types(
+	    types_cur_out OUT SYS_REFCURSOR);
 
 	PROCEDURE sp_ins_member(
 		l_v_firstname_in IN VARCHAR2,
@@ -20,12 +26,12 @@ as
 		l_n_teamID_in IN NUMBER,
 		l_n_memberID_out OUT NUMBER
 	);
-	
+
 	PROCEDURE sp_del_member(
 		l_n_memberID_in IN NUMBER,
 		l_n_valid_out OUT NUMBER
 	);
-	
+
 end;
 /
 
@@ -34,6 +40,37 @@ as
 
 	g_x_unsuccessful EXCEPTION;
 	PRAGMA EXCEPTION_INIT(g_x_unsuccessful, -20101);
+
+/*********************************************************************
+/**
+/** Procedure get_members
+/** Developer: Josef Koch
+/** Description: Returns a cursor with all members.
+/*********************************************************************/
+
+	PROCEDURE get_members(
+	    members_cur_out OUT SYS_REFCURSOR) as
+	begin
+	    OPEN members_cur_out FOR SELECT * FROM VIEW_MEMBERS;
+	end;
+
+
+
+/*********************************************************************
+/**
+/** Procedure get_types
+/** Developer: Josef Koch
+/** Description: Returns a cursor with all types.
+/*********************************************************************/
+
+	PROCEDURE get_types(
+	    types_cur_out OUT SYS_REFCURSOR) as
+	begin
+	    OPEN types_cur_out FOR SELECT * FROM TYPES;
+	end;
+
+
+
 /*********************************************************************
 /**
 /** Procedure sp_ins_member
@@ -66,7 +103,7 @@ as
 			l_n_memberID_out := -1;
 				raise_application_error(-20100, 'Firstname and Lastname cannot be null');
 		END IF;
-		
+
 		IF l_v_sex_in IS NULL THEN
 			INSERT INTO members (firstname, lastname, date_of_birth)
 			VALUES(l_v_firstname_in, l_v_lastname_in, TO_DATE(l_v_birthdate_in, 'yyyy-mm-dd'))
@@ -76,7 +113,7 @@ as
 			VALUES(l_v_firstname_in, l_v_lastname_in, TO_DATE(l_v_birthdate_in, 'yyyy-mm-dd'), l_v_sex_in)
 			returning id INTO l_n_memberID;
 		END IF;
-			
+
 		l_n_memberID_out := l_n_memberID;
 		IF SQL%ROWCOUNT = 0 THEN
 			raise_application_error(-20101, 'Member Insert statement failed');

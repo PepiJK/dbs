@@ -4,7 +4,7 @@
 /* Package: matches
 /* Developer: Leo Gruber
 /* Description: This package groups procedures/functions 
-/*				related to the table matches. It includes 2 procedures
+/*				related to the table matches. It includes 4 procedures
 /*				and 1 function.
 /*				for DML commands.
 /*	
@@ -14,11 +14,17 @@
 CREATE OR REPLACE PACKAGE pa_matches
 as
 
+    PROCEDURE get_matches(
+	    matches_cur_out OUT SYS_REFCURSOR);
+
+    PROCEDURE get_venues(
+	    venues_cur_out OUT SYS_REFCURSOR);
+
 	FUNCTION ven_num_matches(
 	l_n_venuesID_in IN NUMBER,
 	l_v_date_in IN CHAR) RETURN NUMBER;
-	
-	PROCEDURE sp_ins_matches (
+
+	PROCEDURE sp_ins_match (
 	l_v_datetime_in IN VARCHAR2,
 	l_n_homegame_in IN NUMBER,
 	l_v_opponent_in IN VARCHAR2,
@@ -26,11 +32,11 @@ as
 	l_n_venueID_in IN NUMBER,
 	l_n_teamID_in IN NUMBER,
 	l_n_matchID_out OUT NUMBER);
-		
-	PROCEDURE sp_del_matches (
+
+	PROCEDURE sp_del_match (
 	l_n_matchID_in IN NUMBER,
 	l_n_valid_out OUT NUMBER);
-	
+
 end;
 /
 
@@ -43,7 +49,39 @@ CREATE OR REPLACE PACKAGE BODY pa_matches
 as
 	g_x_unsuccessful EXCEPTION;
 	PRAGMA EXCEPTION_INIT(g_x_unsuccessful, -20101);
-	
+
+
+/*********************************************************************
+/**
+/** Procedure get_matches
+/** Developer: Josef Koch
+/** Description: Returns a cursor with all matches.
+/*********************************************************************/
+
+	PROCEDURE get_matches(
+	    matches_cur_out OUT SYS_REFCURSOR) as
+	begin
+	    OPEN matches_cur_out FOR SELECT * FROM VIEW_MATCHES;
+	end;
+
+
+
+/*********************************************************************
+/**
+/** Procedure get_venues
+/** Developer: Josef Koch
+/** Description: Returns a cursor with all venues.
+/*********************************************************************/
+
+	PROCEDURE get_venues(
+	    venues_cur_out OUT SYS_REFCURSOR) as
+	begin
+	    OPEN venues_cur_out FOR SELECT * FROM VENUES;
+	end;
+
+
+
+
 /*********************************************************************
 /**
 /** Function: venue_num_matches
@@ -73,8 +111,8 @@ as
 		IF l_i_isVenue != 1 THEN
 			raise_application_error(-20102, 'Unexisting record');
 		END IF;
-		SELECT COUNT(*) INTO l_n_count FROM venues v 
-		LEFT JOIN matches m 
+		SELECT COUNT(*) INTO l_n_count FROM venues v
+		LEFT JOIN matches m
 		ON v.id = m.venue_id
 		WHERE TRUNC(m.datetime) = TO_DATE(l_v_date_in, 'yyyy-mm-dd');
 		RETURN l_n_count;
@@ -97,7 +135,7 @@ as
 
 /*********************************************************************
 /**
-/** Procedure sp_ins_matches
+/** Procedure sp_ins_match
 /** Out: l_n_matchID_out – the id of the newly created match.
 /**							-1 if unsuccessful
 /** In: l_v_datetime_in - the date of the new match
@@ -107,12 +145,12 @@ as
 /** In: l_n_venueID_in – the id of the venue
 /** In: l_n_teamID_in - the id of the team
 /** Developer: Leo Gruber
-/** Description: Insert a new match, by passing the date, the opponent, 
+/** Description: Insert a new match, by passing the date, the opponent,
 /** optionally a result, the venue id, the team id and homegame var
-/**(1 if homegame, else 0) 
+/**(1 if homegame, else 0)
 /*********************************************************************/
 
-	PROCEDURE sp_ins_matches(
+	PROCEDURE sp_ins_match(
 		l_v_datetime_in IN VARCHAR2,
 		l_n_homegame_in IN NUMBER,
 		l_v_opponent_in IN VARCHAR2,
@@ -129,32 +167,32 @@ as
 		IF l_n_homegame_in NOT IN (0,1) THEN
 			raise_application_error(-20104, 'Unacceptable value: is_homegame must be in (0,1)');
 		END IF;
-		INSERT INTO matches (datetime, is_homegame, opponend, result, venue_id, team_id) 
-		VALUES(TO_TIMESTAMP(l_v_datetime_in, 'yyyy-mm-dd hh24:mi:ss'), l_n_homegame_in, l_v_opponent_in, l_v_result_in, l_n_venueID_in, l_n_teamID_in)  
+		INSERT INTO matches (datetime, is_homegame, opponend, result, venue_id, team_id)
+		VALUES(TO_TIMESTAMP(l_v_datetime_in, 'yyyy-mm-dd hh24:mi:ss'), l_n_homegame_in, l_v_opponent_in, l_v_result_in, l_n_venueID_in, l_n_teamID_in)
 		returning id INTO l_n_matchesID;
 		l_n_matchID_out := l_n_matchesID;
 		IF SQL%ROWCOUNT = 0 THEN
 			raise_application_error(-20101, 'Insert statement failed');
 		END IF;
 		COMMIT;
-		EXCEPTION 
+		EXCEPTION
 			WHEN x_invalid_homegame OR g_x_unsuccessful THEN
 				l_n_matchID_out := -1;
-				pa_logging.sp_ins_error('Exception in sp_ins_matches',SQLCODE);
+				pa_logging.sp_ins_error('Exception in sp_ins_match',SQLCODE);
 			WHEN OTHERS THEN
 				l_n_matchID_out := -1;
-				pa_logging.sp_ins_error('Unexpected Exception in sp_ins_matches', SQLCODE);
+				pa_logging.sp_ins_error('Unexpected Exception in sp_ins_match', SQLCODE);
 	end;
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
 /*********************************************************************
 /**
-/** Procedure sp_del_matches
-/** Out: l_n_valid_out – -1 if the input record is undefined/operation 
+/** Procedure sp_del_match
+/** Out: l_n_valid_out – -1 if the input record is undefined/operation
 /**						unsuccessful else 0
 /** In: l_n_matchID_in - the id of the match
 /** Developer: Leo Gruber
@@ -162,7 +200,7 @@ as
 /** the id of the match.
 /*********************************************************************/
 
-	PROCEDURE sp_del_matches (
+	PROCEDURE sp_del_match (
 	l_n_matchID_in IN NUMBER,
 	l_n_valid_out OUT NUMBER)
 	as
@@ -180,17 +218,17 @@ as
 			RAISE g_x_unsuccessful;
 		END IF;
 		COMMIT;
-		EXCEPTION 
+		EXCEPTION
 			WHEN x_invalid_record OR g_x_unsuccessful THEN
 			l_n_valid_out := -1;
-			pa_logging.sp_ins_error('Exception in sp_del_matches', SQLCODE);
+			pa_logging.sp_ins_error('Exception in sp_del_match', SQLCODE);
 			WHEN OTHERS THEN
 			l_n_valid_out := -1;
-			pa_logging.sp_ins_error('Unexpected Exception in sp_del_matches',SQLCODE);
+			pa_logging.sp_ins_error('Unexpected Exception in sp_del_match',SQLCODE);
 	end;
-	
-	
-	
+
+
+
 
 
 end;

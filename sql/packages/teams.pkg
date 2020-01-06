@@ -4,7 +4,7 @@
 /* Package: teams
 /* Developer: Leo Gruber
 /* Description: This package groups procedures/functions 
-/*				related to the table teams. It includes 2 procedures.
+/*				related to the table teams. It includes 5 procedures.
 /*				for DML commands.
 /*	
 /**********************************************************************/
@@ -13,18 +13,27 @@
 CREATE OR REPLACE PACKAGE pa_teams
 as
 
-	PROCEDURE sp_ins_teams (
+    PROCEDURE get_teams(
+	    teams_cur_out OUT SYS_REFCURSOR);
+
+    PROCEDURE get_teamssponsors(
+	    sponsors_cur_out OUT SYS_REFCURSOR);
+
+	PROCEDURE get_leagues(
+	    leagues_cur_out OUT SYS_REFCURSOR);
+
+	PROCEDURE sp_ins_team (
 	l_v_title_in IN VARCHAR2,
 	l_n_leagueID_in IN NUMBER,
 	l_n_teamID_out OUT NUMBER);
-	
+
 	PROCEDURE sp_del_team(
 		l_n_teamID_in IN NUMBER,
 		l_n_valid_out OUT NUMBER
 	);
-	
+
 	g_v_team_title teams.title%TYPE;
-	
+
 end;
 /
 
@@ -38,9 +47,56 @@ as
 	g_x_unsuccessful EXCEPTION;
 	PRAGMA EXCEPTION_INIT(g_x_unsuccessful, -20101);
 
+
 /*********************************************************************
 /**
-/** Procedure sp_ins_teams
+/** Procedure get_teams
+/** Developer: Josef Koch
+/** Description: Returns a cursor with all teams.
+/*********************************************************************/
+
+	PROCEDURE get_teams(
+	    teams_cur_out OUT SYS_REFCURSOR) as
+	begin
+	    OPEN teams_cur_out FOR SELECT * FROM VIEW_TEAMS;
+	end;
+
+
+
+/*********************************************************************
+/**
+/** Procedure get_teamssponsors
+/** Developer: Josef Koch
+/** Description: Returns a cursor with all sponsors and their
+/** sponsored team.
+/*********************************************************************/
+
+	PROCEDURE get_teamssponsors(
+	    sponsors_cur_out OUT SYS_REFCURSOR) as
+	begin
+	    OPEN sponsors_cur_out FOR SELECT * FROM VIEW_TEAMSPONSORS;
+	end;
+
+
+
+/*********************************************************************
+/**
+/** Procedure get_leagues
+/** Developer: Josef Koch
+/** Description: Returns a cursor with all leagues.
+/*********************************************************************/
+
+	PROCEDURE get_leagues(
+	    leagues_cur_out OUT SYS_REFCURSOR) as
+	begin
+	    OPEN leagues_cur_out FOR SELECT * FROM VIEW_LEAGUES;
+	end;
+
+
+
+/*********************************************************************
+/**
+/** Procedure sp_ins_team
 /** Out: l_n_teamID_out – the id of the newly created team.
 /**							-1 if unsuccessful
 /** In: l_v_title_in - the name of the new team
@@ -49,12 +105,12 @@ as
 /** Description: Insert a new team, by passing the teams title and league.
 /*********************************************************************/
 
-	PROCEDURE sp_ins_teams(
+	PROCEDURE sp_ins_team(
 		l_v_title_in IN VARCHAR2,
 		l_n_leagueID_in IN NUMBER,
 		l_n_teamID_out OUT NUMBER
 	)
-	as
+	is
 		l_n_teamID teams.id%TYPE;
 		l_n_valid NUMBER;
 		x_invalid_record EXCEPTION;
@@ -64,28 +120,28 @@ as
 		IF l_n_valid != 1 THEN
 			raise_application_error(-20102, 'Unexisting record');
 		END IF;
-		INSERT INTO teams (title, league_id) 
+		INSERT INTO teams (title, league_id)
 			VALUES(l_v_title_in, l_n_leagueID_in) RETURNING id INTO l_n_teamID;
 		l_n_teamID_out := l_n_teamID;
 		IF SQL%ROWCOUNT = 0 THEN
 			raise_application_error(-20101, 'Insert statement failed');
 		END IF;
 		COMMIT;
-		EXCEPTION 
+		EXCEPTION
 			WHEN x_invalid_record OR g_x_unsuccessful THEN
 				l_n_teamID_out := -1;
-				pa_logging.sp_ins_error('Exception in sp_ins_teams',SQLCODE);
+				pa_logging.sp_ins_error('Exception in sp_ins_team',SQLCODE);
 			WHEN OTHERS THEN
 				l_n_teamID_out := -1;
-				pa_logging.sp_ins_error('Unexcpeted Exception in sp_ins_teams',SQLCODE);
+				pa_logging.sp_ins_error('Unexcpeted Exception in sp_ins_team',SQLCODE);
 	end;
-	
-	
-	
+
+
+
 /*********************************************************************
 /**
 /** Procedure sp_del_team
-/** Out: l_n_valid_out - -1 if the input record is undefined/operation unsuccessful 
+/** Out: l_n_valid_out - -1 if the input record is undefined/operation unsuccessful
 /** 					else 0
 /** In: l_n_teamID_in – the id of the team to delete.
 /** Developer: Leo Gruber

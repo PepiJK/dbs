@@ -32,12 +32,11 @@ CREATE OR REPLACE VIEW view_members AS
 	
 CREATE OR REPLACE VIEW view_matches AS
 	SELECT matches.id, TO_CHAR(matches.datetime, 'dd.mm.yyyy hh24:mi') AS "Datetime", matches.is_homegame, teams.title AS "Team", matches.opponend, matches.result, 
-	venues.title AS "Venue", leagues.title AS "League"
+	venues.title AS "Venue"
 	FROM matches
 	LEFT JOIN venues ON matches.venue_id = venues.id
 	LEFT JOIN teams ON matches.team_id = teams.id
-	LEFT JOIN leagues ON teams.league_id = leagues.id
-	ORDER BY datetime, leagues.priority;
+	ORDER BY matches.datetime, matches.id;
 	
 	
 
@@ -51,7 +50,41 @@ CREATE OR REPLACE VIEW view_matches AS
 /*********************************************************************/
 	
 CREATE OR REPLACE VIEW view_teams AS
-	SELECT teams.id, teams.title AS "Team", sports.title AS "Sport", leagues.title AS "League" FROM teams 
+	SELECT teams.id, teams.title AS "Team", sports.title AS "Sport", leagues.title AS "League" 
+	FROM teams 
 	INNER JOIN leagues ON teams.league_id = leagues.id
 	LEFT JOIN sports ON leagues.sport_id = sports.id
+	ORDER BY sports.id, leagues.priority;
+
+
+
+/*********************************************************************
+/**
+/** View: view_teamssponsors
+/** Developer: TCSDeveloper
+/** Description: This view is used to view all sponsors and the teams
+/** whichare sponsored by that sponsor
+/**
+/*********************************************************************/
+	
+CREATE OR REPLACE VIEW view_teamsponsors AS
+	SELECT sponsors.id, sponsors.title AS "Sponsor", teams.title AS "Team"
+	FROM teams_sponsors
+	JOIN sponsors ON teams_sponsors.sponsor_id = sponsors.id
+	JOIN teams on teams_sponsors.team_id = teams.id
+	ORDER BY sponsors.id;
+
+
+/*********************************************************************
+/**
+/** View: view_leagues
+/** Developer: TCSDeveloper
+/** Description: This view is used to view all leagues of a all sports
+/**
+/*********************************************************************/
+	
+CREATE OR REPLACE VIEW view_leagues AS 
+	SELECT leagues.id, leagues.title AS "League", sports.title AS "Sport" 
+	FROM sports
+	JOIN leagues ON leagues.sport_id = sports.id
 	ORDER BY sports.id, leagues.priority;
