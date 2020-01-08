@@ -12,9 +12,10 @@ https://www.oracle.com/database/technologies/instant-client/linux-x86-64-downloa
 5. Install oci8: `# pecl install oci8` (when asked input: `instantclient,/opt/oracle`)
 6. Add `extension=oci8.so` to php.ini
 
-### Setup Config
+### Setup Credentials
 
-Set Database User, Password, and Url in `credentials.php`
+1. Copy `credentials-defaults.php` to `credentials.php` 
+2. Set Database User, Password, Url and Port in `credentials.php` 
 
 ### Run the Application
 
