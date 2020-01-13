@@ -51,7 +51,7 @@ as
 /*********************************************************************
 /**
 /** Procedure get_teams
-/** Developer: Josef Koch
+/** Developer: Leo Gruber
 /** Description: Returns a cursor with all teams.
 /*********************************************************************/
 
@@ -66,7 +66,7 @@ as
 /*********************************************************************
 /**
 /** Procedure get_teamssponsors
-/** Developer: Josef Koch
+/** Developer: Leo Gruber
 /** Description: Returns a cursor with all sponsors and their
 /** sponsored team.
 /*********************************************************************/
@@ -82,7 +82,7 @@ as
 /*********************************************************************
 /**
 /** Procedure get_leagues
-/** Developer: Josef Koch
+/** Developer: Leo Gruber
 /** Description: Returns a cursor with all leagues.
 /*********************************************************************/
 

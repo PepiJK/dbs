@@ -1,7 +1,7 @@
 /*********************************************************************
 /**
 /** View: view_members
-/** Developer: TCSDeveloper
+/** Developer: Josef Koch
 /** Description: This view is used to view all members including their
 /**	name, sex, birthdate, type, as well as teams they are in and 
 /** related league and sports.
@@ -23,7 +23,7 @@ CREATE OR REPLACE VIEW view_members AS
 /*********************************************************************
 /**
 /** View: view_matches
-/** Developer: TCSDeveloper
+/** Developer: Daniel Krottendorfer
 /** Description: This view is used to view all matches including date
 /**	if it is a homegame, team, opponent, result, venue and league.
 /**
@@ -43,7 +43,7 @@ CREATE OR REPLACE VIEW view_matches AS
 /*********************************************************************
 /**
 /** View: view_teams
-/** Developer: TCSDeveloper
+/** Developer: Leo Gruber
 /** Description: This view is used to view all teams that are part of 
 /** a league, including team, leauge and sport.
 /**
@@ -61,7 +61,7 @@ CREATE OR REPLACE VIEW view_teams AS
 /*********************************************************************
 /**
 /** View: view_teamssponsors
-/** Developer: TCSDeveloper
+/** Developer: Josef Koch
 /** Description: This view is used to view all sponsors and the teams
 /** whichare sponsored by that sponsor
 /**
@@ -78,7 +78,7 @@ CREATE OR REPLACE VIEW view_teamsponsors AS
 /*********************************************************************
 /**
 /** View: view_leagues
-/** Developer: TCSDeveloper
+/** Developer: Josef Koch
 /** Description: This view is used to view all leagues of a all sports
 /**
 /*********************************************************************/

@@ -91,7 +91,7 @@ end;
 /** Trigger: delete_members
 /** Type: Before row
 /** Type Extension: delete
-/** Developer: Leo Gruber
+/** Developer: Josef Koch
 /** Description: Dieser Trigger garantiert, dass bei Löschen eines 
 /**	Members, also beim Entfernen eines Vereinsmitglieds, dieser auch
 /**	aus zugehörigen Teams und Typen entfernt wird.
@@ -114,7 +114,7 @@ end;
 /** Trigger: delete_teams
 /** Type: Before row
 /** Type Extension: delete
-/** Developer: Leo Gruber
+/** Developer: Daniel Krottendorfer
 /** Description: Dieser Trigger garantiert, dass bei Löschen eines 
 /**	Teams, zugehörige Matches entfernt werden. Weiters
 /** werden zugehörige Members und Types Einträge entfernt, genauso

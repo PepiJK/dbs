@@ -2,7 +2,7 @@
 /*
 /* Filename: members.pkg
 /* Package: members
-/* Developer: Leo Gruber
+/* Developer: Daniel Krottendorfer
 /* Description: This package groups procedures/functions 
 /*				related to the members table. It includes 4 procedures.
 /*	
@@ -44,7 +44,7 @@ as
 /*********************************************************************
 /**
 /** Procedure get_members
-/** Developer: Josef Koch
+/** Developer: Daniel Krottendorfer
 /** Description: Returns a cursor with all members.
 /*********************************************************************/
 
@@ -59,7 +59,7 @@ as
 /*********************************************************************
 /**
 /** Procedure get_types
-/** Developer: Josef Koch
+/** Developer: Daniel Krottendorfer
 /** Description: Returns a cursor with all types.
 /*********************************************************************/
 
@@ -80,7 +80,7 @@ as
 /** In: l_v_lastname_in – the last name of the new member to insert.
 /** In: l_v_birthdate_in – the date of birth of the new member to insert.
 /** In: l_v_sex_in – the sex of the new member to insert.
-/** Developer: Leo Gruber
+/** Developer: Daniel Krottendorfer
 /** Description: Insert a new member, by passing at least a first and last name
 /**
 /*********************************************************************/
@@ -146,7 +146,7 @@ as
 /** In: l_n_memberID_in – the id of the member to delete.
 /** In: l_v_firstname_in – the first name of the member to delete.
 /** In: l_v_lastname_in – the last name of the member to delete.
-/** Developer: Leo Gruber
+/** Developer: Daniel Krottendorfer
 /** Description: Remove a member, by passing the id, firstname and lastname
 /**
 /*********************************************************************/

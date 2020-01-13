@@ -2,7 +2,7 @@
 /*
 /* Filename: matches.pkg
 /* Package: matches
-/* Developer: Leo Gruber
+/* Developer: Josef Koch
 /* Description: This package groups procedures/functions 
 /*				related to the table matches. It includes 4 procedures
 /*				and 1 function.
@@ -89,7 +89,7 @@ as
 /** In: l_v_date_in - the date of matches
 /** Returns: the number of matches on a given date in a given venue
 /**			 -1 if venue non existent
-/** Developer: Leo Gruber
+/** Developer: Josef Koch
 /** Description: This function is used to return the number of matches
 /**				 on a given date in a given venue. Useful for deciding
 /**				 if a venue is fully booked on a day.
@@ -144,7 +144,7 @@ as
 /** In: l_v_result_in – the result of the match
 /** In: l_n_venueID_in – the id of the venue
 /** In: l_n_teamID_in - the id of the team
-/** Developer: Leo Gruber
+/** Developer: Josef Koch
 /** Description: Insert a new match, by passing the date, the opponent,
 /** optionally a result, the venue id, the team id and homegame var
 /**(1 if homegame, else 0)
@@ -195,7 +195,7 @@ as
 /** Out: l_n_valid_out – -1 if the input record is undefined/operation
 /**						unsuccessful else 0
 /** In: l_n_matchID_in - the id of the match
-/** Developer: Leo Gruber
+/** Developer: Josef Koch
 /** Description: Delete a match record from the table matches by passing
 /** the id of the match.
 /*********************************************************************/
@@ -236,20 +236,3 @@ end;
 
 
 
-
-/**** FOR TESTING *****/
-
-declare
-	idd number;
-begin 
-pa_matches.sp_ins_matches(
-		l_v_datetime_in => '2020-01-10 13:30:00',
-		l_n_homegame_in => 1,
-		l_v_opponent_in => 'trr',
-		l_v_result_in => NULL,
-		l_n_venueID_in => 1,
-		l_n_teamID_in =>2,
-		l_n_matchID_out => idd
-	);
-end;
-/
